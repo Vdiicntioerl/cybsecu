@@ -38,7 +38,6 @@ class BasicGUI:
                 with dpg.group(horizontal=True):
                     dpg.add_text(field)
                     dpg.add_input_text(default_value=DEFAULT_VALUES[field], tag=f"connection_{field}")
-
             dpg.add_button(label="Connect", callback=self.run_chat)
 
     def _create_menu(self)->None:
@@ -117,6 +116,9 @@ class BasicGUI:
             dpg.render_dearpygui_frame()
 
         dpg.destroy_context()
+
+
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
