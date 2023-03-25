@@ -8,10 +8,12 @@ from generic_callback import GenericCallback
 
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-
+from cryptography.hazmat.primitives import padding
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
+
+import base64
 
 # default values used to populate connection window
 DEFAULT_VALUES = {
@@ -27,8 +29,7 @@ class CipheredGUI(BasicGUI):
         self._key = None
 
     def _create_connection_window(self) -> None:
-       with dpg.window(label="Connection", pos=(200, 150), width=400, height=300, show=False, tag="connection_windows"):
-            
+       with dpg.window(label="Connection", pos=(200, 150), width=400, height=300, show=False, tag="connection_windows"):           
         for field in ["host", "port", "name"]:
             with dpg.group(horizontal=True):
                 dpg.add_text(field)
@@ -37,10 +38,6 @@ class CipheredGUI(BasicGUI):
             dpg.add_text("password")
             dpg.add_input_text(default_value="",tag=f"connection_password", password=True)
         dpg.add_button(label="Connect", callback=self.run_chat)
-
-    
-        
-
 
     def run_chat(self, sender, app_data)->None:
         # callback used by the connection windows to start a chat session
@@ -93,10 +90,28 @@ class CipheredGUI(BasicGUI):
         encrypted_message = encryptor.update(padded_message) + encryptor.finalize()
 
         return (encrypted_message , iv)
-
-
-
     
+    def decrypt(self, encrypted_message):
+        padding_type = padding.PKCS7
+        #Recuperation de l'iv puis du message chiffre en base 64
+        iv = base64.b64decode(encrypted_message[0]['data'])
+        encrypted_message = base64.b64decode(encrypted_message[1]['data'])
+
+        #Fonction dechiffrage
+        cipher= Cipher(
+            algorithms.AES(self.key),
+            modes.CTR(iv),
+            backend=default_backend()
+        )
+        #Dechiffrage
+        decryptor= cipher.decryptor()
+        plaintext = decryptor.update(encrypted_message)+decryptor.finalize()
+
+        #Suppression du padding
+        unpadder = padding_type(padding_type.block_size).unpadder()
+        plaintext = unpadder.update(plaintext)+unpadder.finalize()
+         
+        return plaintext 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
