@@ -62,7 +62,7 @@ class CipheredGUI(BasicGUI):
 
     def key_derivation(self,password:str)-> bytes:
         #Salt genere aleatoirement
-        salt=os.urandom(16)
+        salt="Bonneoumauvaisesituation".encode()
         #conversion du mot de passe en bytes
         password_bytes=password.encode('utf-8')
         #derivation
@@ -75,7 +75,7 @@ class CipheredGUI(BasicGUI):
     
     def encrypt(self, message):
         # Generation d'un vecteur d'iniitalisation aleatoire
-        iv=os.random(16)
+        iv=os.urandom(16)
 
         #Creation d'un objet Cipher en utilisant l'algorithme AES
         cipher = Cipher(algorithms.AES(self._key), 
@@ -92,7 +92,6 @@ class CipheredGUI(BasicGUI):
         return (encrypted_message , iv)
     
     def decrypt(self, encrypted_message):
-        padding_type = padding.PKCS7
         #Recuperation de l'iv puis du message chiffre en base 64
         iv = base64.b64decode(encrypted_message[0]['data'])
         encrypted_message = base64.b64decode(encrypted_message[1]['data'])
@@ -103,15 +102,16 @@ class CipheredGUI(BasicGUI):
             modes.CTR(iv),
             backend=default_backend()
         )
+
         #Dechiffrage
         decryptor= cipher.decryptor()
         plaintext = decryptor.update(encrypted_message)+decryptor.finalize()
 
         #Suppression du padding
-        unpadder = padding_type(padding_type.block_size).unpadder()
-        plaintext = unpadder.update(plaintext)+unpadder.finalize()
+        unpadder = padding.PKCS7(128).unpadder()
+        plaintext = decryptor.update(plaintext)+decryptor.finalize()
          
-        return plaintext 
+        return (unpadder.update(plaintext)+unpadder.finalize()).decode()
     
     def send(self, text) -> None:
         message=self.encrypt(text)
