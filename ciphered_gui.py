@@ -38,6 +38,20 @@ class CipheredGUI(BasicGUI):
             dpg.add_text("password")
             dpg.add_input_text(default_value="",tag=f"connection_password", password=True)
         dpg.add_button(label="Connect", callback=self.run_chat)
+        
+    def key_derivation(self,password:str)-> bytes:
+            #Salt genere aleatoirement
+            salt="Bonneoumauvaisesituation".encode()
+            #conversion du mot de passe en bytes
+            password_bytes = password.encode()
+            #password_bytes=password.encode('utf-8')
+            #derivation
+            kdf = PBKDF2HMAC(algorithm=hashes.SHA256(),
+                            length=32,
+                            salt=salt,
+                            iterations=480000)
+            key = kdf.derive(password_bytes)
+            return key 
 
     def run_chat(self, sender, app_data)->None:
         # callback used by the connection windows to start a chat session
@@ -58,20 +72,9 @@ class CipheredGUI(BasicGUI):
         dpg.set_value("screen", "Connecting")
 
         #appel de la fonction de derivation de cle
-        self.key = self.key_derivation(password)
+        self._key = self.key_derivation(password)
 
-    def key_derivation(self,password:str)-> bytes:
-        #Salt genere aleatoirement
-        salt="Bonneoumauvaisesituation".encode()
-        #conversion du mot de passe en bytes
-        password_bytes=password.encode('utf-8')
-        #derivation
-        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(),
-                         length=32,
-                         salt=salt,
-                         iterations=480000)
-        key = kdf.derive(password_bytes)
-        return key    
+       
     
     def encrypt(self, message):
         # Generation d'un vecteur d'iniitalisation aleatoire
@@ -79,39 +82,42 @@ class CipheredGUI(BasicGUI):
 
         #Creation d'un objet Cipher en utilisant l'algorithme AES
         cipher = Cipher(algorithms.AES(self._key), 
-                        modes.CDC(iv),
+                        modes.CTR(iv),
                         backend=default_backend()
                         )
         #Generation du message
-        padding_length = 16 - (len(message)%16)
-        padding = bytes([padding_length]*padding_length)
-        padded_message = message + padding
+        # padding_length = 16 - (len(message)%16)
+        # padding = bytes([padding_length]*padding_length)
+        # padded_message = message + padding
+        # encryptor = cipher.encryptor()
         encryptor = cipher.encryptor()
-        encrypted_message = encryptor.update(padded_message) + encryptor.finalize()
+
+        padder = padding.PKCS7(128).padder()
+        padded_data = padder.update(message.encode()) + padder.finalize()
+        encrypted_message = encryptor.update(padded_data) + encryptor.finalize()
+
 
         return (encrypted_message , iv)
     
     def decrypt(self, encrypted_message):
         #Recuperation de l'iv puis du message chiffre en base 64
-        iv = base64.b64decode(encrypted_message[0]['data'])
-        encrypted_message = base64.b64decode(encrypted_message[1]['data'])
+        iv = base64.b64decode(encrypted_message[1]['data'])
+        encrypted_messag = base64.b64decode(encrypted_message[0]['data'])
 
         #Fonction dechiffrage
         cipher= Cipher(
-            algorithms.AES(self.key),
+            algorithms.AES(self._key),
             modes.CTR(iv),
             backend=default_backend()
         )
 
         #Dechiffrage
         decryptor= cipher.decryptor()
-        plaintext = decryptor.update(encrypted_message)+decryptor.finalize()
-
         #Suppression du padding
         unpadder = padding.PKCS7(128).unpadder()
-        plaintext = decryptor.update(plaintext)+decryptor.finalize()
+        plaintext = decryptor.update(encrypted_messag)+decryptor.finalize()
          
-        return (unpadder.update(plaintext)+unpadder.finalize()).decode()
+        return (unpadder.update(plaintext)+unpadder.finalize())
     
     def send(self, text) -> None:
         message=self.encrypt(text)
