@@ -112,6 +112,19 @@ class CipheredGUI(BasicGUI):
         plaintext = unpadder.update(plaintext)+unpadder.finalize()
          
         return plaintext 
+    
+    def send(self, text) -> None:
+        message=self.encrypt(text)
+        #function called to send a message to all (broadcasting)
+        self._client.send_message(message)
+
+    def recv(self) -> None:
+        # function called to get incoming messages and display them
+        if self._callback is not None:
+            for user, message in self._callback.get():
+                message = self.decrypt(message)
+                self.update_text_screen(f"{user} : {message}")
+            self._callback.clear()
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
