@@ -18,4 +18,11 @@
 ## Lorsqu'un serveur vient attaquer avec des faux messages, on appelle l'attaque de  l'homme du milieu (HDM)
 ## Pour contrer une attaque HDM, on peut utiliser un certificat d'authentification SSL/TLS, qui vont donner une preuve que le message vient bien du contact avec qui on veut communiquer, et pas d'un pirate.
 
+## TTL
+## Aucune différence n'a ete remarquee avec la precedente classe.
+## En soustrayant 45 sec au TTL, le message envoye est directement mis de cote, le log d'erreur se declenche directement.
+## Si on ne prend qu'un TTL de 30 sec, c'est inefficace. Les pirates on largement le temps de changer le message. Si on prend un temps plus petit, on diminue le risque d'alteration des donnees. 
+## Si on prend ce risque, des messages qui ne sont pas alteres declencheront un log d'erreur parce que le delai de transmission est trop long par rapport au TTL.
 
+## Regard critique
+## Dans ce chat, nous avons essaye d'appliquer les proprietes vues en cours, on a chiffre les donnees pour la confidentialite, on a limite l'alteration des donnees avec la methode Fernet et par limitation du temps pour decrypter la donnee. Cependant, il nous manque la propriete de tracabilite pour savoir ce qu'l se passe pendant la transmission de donnees. Il nous manque aussi l'authentification, car dans ce chat, on peut prendre le nom de n'importe quel utilisateur sans qu'on ne verifie l'identite.
