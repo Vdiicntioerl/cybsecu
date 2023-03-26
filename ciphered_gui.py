@@ -86,10 +86,6 @@ class CipheredGUI(BasicGUI):
                         backend=default_backend()
                         )
         #Generation du message
-        # padding_length = 16 - (len(message)%16)
-        # padding = bytes([padding_length]*padding_length)
-        # padded_message = message + padding
-        # encryptor = cipher.encryptor()
         encryptor = cipher.encryptor()
 
         padder = padding.PKCS7(128).padder()

@@ -11,6 +11,7 @@
 ## Urandom peut etre un bon choix pour la cryptographie car elle se base sur une source d'entropie, ce qui est suffsant pour générer des nombres aleatoires de grandes qualites. Pour des applications plus sécurisées, on utlisera une bibliotheque dediee au contexte de chiffrement.
 ## Cependant, si on utilise les primitives, on prend le risque de s'exposer aux failles de securite decouvertes.
 ## Un serveur malveillant peut encore recolter les donnees, comme les identifiants et les mots de passe, attaquer par force brute. Il peut aussi intercepter les donnees et les modifier, et meme injecter du code pour prendre le controle des systemes.
-## D'apres ce qu'on vient de dire, il nous manque la propriete de l'integrite.
+## D'apres ce qu'on vient d'ennoncer, il nous manque la propriete de l'integrite.
 
 ## ASE 
+##
