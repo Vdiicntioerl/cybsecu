@@ -1,23 +1,35 @@
-import os
-import logging
-from FernetGUI import FernetGUI
-from chat_client import ChatClient
-from cryptography.fernet import Fernet
-import dearpygui.dearpygui as dpg
-import hashlib
-import base64
-from generic_callback import GenericCallback
 
-DEFAULT_VALUES = {
-    "host" : "127.0.0.1",
-    "port" : "6666",
-    "name" : "foo",
-    "password" : ""
-}
+from FernetGUI import FernetGUI
+from cryptography.fernet import Fernet
+from cryptography.fernet import InvalidToken
+import time
+import base64
+import logging
+
+#Duree de vie d'un message en sec
+TTL = 30-45
 
 class TimeFernetGUI(FernetGUI):
-    def __init__(self) -> None:
-        super().__init__()
-        self._key=None
-    
-    
+    def encrypt(self, message):
+        f=Fernet(self._key)
+        temps = int(time.time())
+        encrypted_message=f.encrypt_at_time(bytes(message,'utf-8'),current_time=temps)
+        return encrypted_message
+
+    def decrypt(self, encrypted_message):
+        message = base64.b64decode(encrypted_message['data'])
+        temps = int(time.time())
+        f = Fernet(self._key)
+        try:
+            return f.decrypt_at_time(message,ttl=TTL,current_time= temps).decode()
+        except InvalidToken as e:
+            raise logging.exception("Invalid Token")
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+
+    # instanciate the class, create context and related stuff, run the main loop
+    client = TimeFernetGUI()
+    client.create()
+    client.loop()    
+
+
